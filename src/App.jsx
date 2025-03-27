@@ -182,6 +182,10 @@ export default function App() {
           font: { color: "white" },
           margin: { t: 20 },
         }}
+        config={{
+          displaylogo: false, // ✅ hides the Plotly logo
+          modeBarButtonsToRemove: ['sendDataToCloud'], // optional: cleaner toolbar
+        }}
         style={{ width: "100%", height: "500px" }}
       />
     </div>
