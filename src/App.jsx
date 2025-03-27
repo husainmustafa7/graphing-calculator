@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import Plot from "react-plotly.js";
 import { evaluate } from "mathjs";
-import { normalizeExpression } from "./utils/normalizeExpression";
+import { normalizeExpression } from "./utils/normalizeExpression"; // ✅ Important!
 import "./styles.css";
 
 export default function App() {
-
-  const normalizedInput = normalizeExpression(userInput);
-
   const [expressions, setExpressions] = useState([
     { id: 1, expr: "", color: "blue" },
   ]);
@@ -89,7 +86,7 @@ export default function App() {
           return;
         }
 
-        // X-based inequality like x > 3
+        // X-based inequality
         const xInequality = raw.match(/^\s*x\s*([<>]=?)\s*([\d.\-+*/ePIx()]+)$/i);
         if (xInequality) {
           const [, op, valueExpr] = xInequality;
