@@ -5,6 +5,9 @@ import { normalizeExpression } from "./utils/normalizeExpression";
 import "./styles.css";
 
 export default function App() {
+
+  const normalizedInput = normalizeExpression(userInput);
+
   const [expressions, setExpressions] = useState([
     { id: 1, expr: "", color: "blue" },
   ]);
