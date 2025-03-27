@@ -15,10 +15,12 @@ export default function App() {
   // ✅ Updated to normalize expression before extracting variables
   const extractVariables = (expr) => {
     const normalized = normalizeExpression(expr);
-    const matches = normalized.match(/[a-wyzA-WYZ]/g); // ✅ FIXED, no spaces
+    console.log("Normalized expression:", normalized); // 👈 add this line
+    const matches = normalized.match(/[a-wyzA-WYZ]/g);
     const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
     return letters.filter((v) => v !== "x");
   };
+
 
   useEffect(() => {
     const allVars = new Set();
