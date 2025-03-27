@@ -12,26 +12,27 @@ export default function App() {
 
   const colors = ["blue", "red", "green", "orange", "purple", "cyan", "magenta"];
 
+  // ✅ Updated to normalize expression before extracting variables
   const extractVariables = (expr) => {
-  const normalized = normalizeExpression(expr); // ✅ use normalized input
-  const matches = normalized.match(/[a-wyzA-WYZ]/g); // ignore x
-  const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
-  return letters.filter((v) => v !== "x");
-};
+    const normalized = normalizeExpression(expr);
+    const matches = normalized.match(/[a-wyzA-WYZ]/g); // ignore x
+    const letters = [...new Set(matches?.map(l => l.toLowerCase()) || [])];
+    return letters.filter((v) => v !== "x");
+  };
 
   useEffect(() => {
-  const allVars = new Set();
-  expressions.forEach((exp) => {
-    extractVariables(exp.expr).forEach((v) => allVars.add(v));
-  });
+    const allVars = new Set();
+    expressions.forEach(exp => {
+      extractVariables(exp.expr).forEach(v => allVars.add(v));
+    });
 
-  const updatedVars = {};
-  allVars.forEach((v) => {
-    updatedVars[v] = variables[v] ?? 1;
-  });
+    const updated = {};
+    allVars.forEach(v => {
+      updated[v] = variables[v] ?? 1;
+    });
 
-  setVariables(updatedVars);
-}, [expressions]);
+    setVariables(updated);
+  }, [expressions]);
 
   const generatePlotData = () => {
     const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
@@ -81,7 +82,10 @@ export default function App() {
         }
 
         // Standard function
-        const y = x.map(val => evaluate(raw, { x: val, ...variables }));
+        const y = x.map(val =>
+          evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
+        );
+
         plots.push({ x, y, type: "scatter", mode: "lines", marker: { color }, name: exp.expr });
       } catch (err) {
         plots.push({
