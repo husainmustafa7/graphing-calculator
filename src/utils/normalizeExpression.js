@@ -3,36 +3,33 @@ export function normalizeExpression(rawExpr) {
 
   let expr = rawExpr;
 
-  // ✅ Step 1: Capital X → lowercase
+  // Lowercase all variables
   expr = expr.replace(/X/g, "x");
 
-  // ✅ Step 2: Wrap sinx, cosx, etc. → sin(x)
+  // Step 1: Function shorthands like sinx → sin(x)
   const functions = ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'ln', 'sqrt', 'abs', 'asin', 'acos', 'atan'];
   functions.forEach(fn => {
     const regex = new RegExp(`\\b${fn}\\s*([a-zA-Z0-9(])`, 'g');
     expr = expr.replace(regex, `${fn}($1`);
   });
 
-  // ✅ Step 3: Replace constants
+  // Step 2: Constants
   expr = expr.replace(/π|pi/gi, "PI");
   expr = expr.replace(/\be\b/g, "e");
 
-  // ✅ Step 4: Add * between number and variable (2x → 2*x)
-  expr = expr.replace(/(\d)([a-zA-Z])/g, "$1*$2");
+  // Step 3: Insert * safely (but don't mess with function names)
+  // between number and variable or parentheses
+  expr = expr.replace(/(\d)([a-zA-Z(])/g, "$1*$2");
+  // between variable and number/variable/parenthesis
+  expr = expr.replace(/([a-zA-Z])(\d|\()/g, "$1*$2");
 
-  // ✅ Step 5: Add * between variable and variable (ax → a*x)
-  expr = expr.replace(/([a-zA-Z])([a-zA-Z])/g, "$1*$2");
+  // between closing parenthesis and variable or number or open (
+  expr = expr.replace(/(\))([a-zA-Z(])/g, "$1*$2");
 
-  // ✅ Step 6: Add * between number/variable and parentheses
-  expr = expr.replace(/(\d)(\s*)(\()/g, "$1*$3");
-  expr = expr.replace(/([a-zA-Z])(\s*)(\()/g, "$1*$3");
-  expr = expr.replace(/(\))(\s*)([a-zA-Z])/g, "$1*$3");
-  expr = expr.replace(/(\))(\s*)(\()/g, "$1*$3");
-
-  // ✅ Step 7: Close unmatched (
+  // Auto-close unbalanced parentheses
   const open = (expr.match(/\(/g) || []).length;
   const close = (expr.match(/\)/g) || []).length;
-  if (open > close) expr += ")".repeat(open - close);
+  if (open > close) expr += ')'.repeat(open - close);
 
   return expr;
 }
