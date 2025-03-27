@@ -10,30 +10,33 @@ export function normalizeExpression(rawExpr) {
   expr = expr.replace(/π|pi/gi, "PI");
   expr = expr.replace(/\be\b/g, "e");
 
-  // Step 2: Function names (sinx → sin(x)), BEFORE anything gets broken
+  // Step 2: Function names like sinx → sin(x)
   const functions = ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'ln', 'sqrt', 'abs', 'asin', 'acos', 'atan'];
   functions.forEach(fn => {
+    // match sinx, sin 2x, sin(x) should be untouched
     const regex = new RegExp(`\\b${fn}(?!\\s*\\()\\s*([a-zA-Z0-9])`, 'g');
     expr = expr.replace(regex, `${fn}($1)`);
   });
 
-  // Step 3: Insert * between:
-  // number and variable/parenthesis (e.g., 2x, 3(x+1))
+  // Step 3: Multiply between number and variable or parenthesis (2x, 2(x))
   expr = expr.replace(/(\d)([a-zA-Z(])/g, "$1*$2");
-  // variable and number (e.g., x2 → x*2)
+
+  // Multiply between variable and number (x2 → x*2)
   expr = expr.replace(/([a-zA-Z])(\d)/g, "$1*$2");
-  // variable and variable (e.g., ab → a*b), EXCEPT known function names
+
+  // Multiply between variable and variable (but skip known functions)
   expr = expr.replace(/([a-zA-Z])([a-zA-Z])/g, (match, p1, p2) => {
-    const combined = `${p1}${p2}`;
-    return functions.includes(combined.toLowerCase()) ? combined : `${p1}*${p2}`;
+    const fnGuess = `${p1}${p2}`.toLowerCase();
+    return functions.includes(fnGuess) ? `${p1}${p2}` : `${p1}*${p2}`;
   });
-  // closing paren and variable/number/open paren
+
+  // Multiply between ) and variable or (
   expr = expr.replace(/(\))([a-zA-Z(])/g, "$1*$2");
 
-  // Step 4: Auto-close unbalanced parentheses
+  // Auto-close unbalanced parentheses
   const open = (expr.match(/\(/g) || []).length;
   const close = (expr.match(/\)/g) || []).length;
-  if (open > close) expr += ")".repeat(open - close);
+  if (open > close) expr += ')'.repeat(open - close);
 
   return expr;
 }
