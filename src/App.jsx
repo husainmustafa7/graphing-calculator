@@ -16,10 +16,14 @@ export default function App() {
   // ✅ Updated to normalize expression before extracting variables
   const extractVariables = (expr) => {
     const normalized = normalizeExpression(expr);
-    console.log("Normalized expression:", normalized); // 👈 add this line
-    const matches = normalized.match(/[a-wyzA-WYZ]/g);
+
+    // Only match individual variables (excluding math functions, constants)
+    const matches = normalized.match(/\b[a-zA-Z]\b/g); // match full standalone variables only
+
     const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
-    return letters.filter((v) => v !== "x");
+
+    // Exclude 'x', 'e', and 'PI' which are handled by mathjs
+    return letters.filter((v) => v !== "x" && v !== "e" && v !== "pi");
   };
 
 
