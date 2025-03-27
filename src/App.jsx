@@ -15,7 +15,7 @@ export default function App() {
   // ✅ Updated to normalize expression before extracting variables
   const extractVariables = (expr) => {
     const normalized = normalizeExpression(expr);
-    const matches = normalized.match(/[a-wyzA-WYZ]/g); // ✅ FIXED
+    const matches = normalized.match(/[a-wyzA-WYZ]/g); // ✅ FIXED, no spaces
     const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
     return letters.filter((v) => v !== "x");
   };
