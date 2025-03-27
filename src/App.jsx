@@ -5,7 +5,6 @@ import { normalizeExpression } from "./utils/normalizeExpression";
 import "./styles.css";
 
 export default function App() {
-
   const [expressions, setExpressions] = useState([
     { id: 1, expr: "sinx", color: "blue" }
   ]);
@@ -13,19 +12,12 @@ export default function App() {
 
   const colors = ["blue", "red", "green", "orange", "purple", "cyan", "magenta"];
 
-  // ✅ Updated to normalize expression before extracting variables
   const extractVariables = (expr) => {
     const normalized = normalizeExpression(expr);
-
-    // Only match individual variables (excluding math functions, constants)
-    const matches = normalized.match(/\b[a-zA-Z]\b/g); // match full standalone variables only
-
+    const matches = normalized.match(/\b[a-zA-Z]\b/g); // only single-letter variables
     const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
-
-    // Exclude 'x', 'e', and 'PI' which are handled by mathjs
-    return letters.filter((v) => v !== "x" && v !== "e" && v !== "pi");
+    return letters.filter((v) => !["x", "e", "p"].includes(v));
   };
-
 
   useEffect(() => {
     const allVars = new Set();
