@@ -5,6 +5,9 @@ import { normalizeExpression } from "./utils/normalizeExpression";
 import "./styles.css";
 
 export default function App() {
+  console.log("RAW:", exp.expr);
+  console.log("NORMALIZED:", normalizeExpression(exp.expr));
+
   const [expressions, setExpressions] = useState([
     { id: 1, expr: "sinx", color: "blue" }
   ]);
