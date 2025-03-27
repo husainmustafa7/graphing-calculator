@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Plot from "react-plotly.js";
 import { evaluate } from "mathjs";
-import { normalizeExpression } from "./utils/normalizeExpression.js";
+import { normalizeExpression } from "./utils/normalizeExpression";
 import "./styles.css";
 
 export default function App() {
