@@ -37,7 +37,7 @@ export default function App() {
     const plots = [];
 
     expressions.forEach((exp, index) => {
-      const raw = normalizeExpression(exp.expr);
+      evaluate(normalizeExpression(exp.expr), { x: val, ...variables });
       const color = exp.color || colors[index % colors.length];
 
       try {
