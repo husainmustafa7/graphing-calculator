@@ -69,7 +69,7 @@ body {
 /* ========== Sidebar ========== */
 .sidebar {
   width: 300px;
-  padding: 12px 12px 12px 0
+  padding: 12px 12px 12px 0;
   overflow-y: auto;
   border-right: 1px solid #333;
   background: #1e1e1e;
