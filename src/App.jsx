@@ -137,8 +137,9 @@ export default function App() {
   };
 
   return (
-    <div className="container">
-      <h1>Graphing Calculator</h1>
+  <div className="container">
+    <div className="sidebar">
+      <h2>Graphing Calculator</h2>
 
       {expressions.map(exp => (
         <div key={exp.id} className="expression-row">
@@ -146,22 +147,13 @@ export default function App() {
             type="text"
             value={exp.expr}
             onChange={(e) => handleExpressionChange(exp.id, e.target.value)}
-            placeholder="Enter expression like sinx, y>x^2, a*sinx"
+            placeholder="e.g. y = sinx"
           />
           <button className="remove-btn" onClick={() => removeExpression(exp.id)}>✖</button>
-          {!isValidExpression(exp.expr) &&
-            !exp.expr.trim().startsWith("y") &&
-            !exp.expr.trim().startsWith("x") && (
-              <div style={{ color: "red", fontSize: "0.8em" }}>
-                ❌ Invalid Expression
-              </div>
-            )}
         </div>
       ))}
 
-      <button className="add-btn" onClick={addExpression}>
-        + Add Expression
-      </button>
+      <button className="add-btn" onClick={addExpression}>+ Add Expression</button>
 
       <div className="sliders">
         {Object.keys(variables).map(v => (
@@ -182,7 +174,9 @@ export default function App() {
           </div>
         ))}
       </div>
+    </div>
 
+    <div className="plot-area">
       <Plot
         data={generatePlotData()}
         layout={{
@@ -196,8 +190,9 @@ export default function App() {
           displaylogo: false,
           modeBarButtonsToRemove: ['sendDataToCloud'],
         }}
-        style={{ width: "100%", height: "500px" }}
-      />
+        style={{ width: "100%", height: "100%" }}
+        />
+      </div>
     </div>
   );
 }
