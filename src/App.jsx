@@ -19,6 +19,16 @@ export default function App() {
     return letters.filter((v) => !["x", "e", "p"].includes(v));
   };
 
+  // ✅ Hook for Android WebView input
+  useEffect(() => {
+    window.plotFromNative = function (expr) {
+      console.log("📡 Received from Android:", expr);
+      const nextId = expressions.length ? expressions[expressions.length - 1].id + 1 : 1;
+      const nextColor = colors[expressions.length % colors.length];
+      setExpressions(prev => [...prev, { id: nextId, expr: expr, color: nextColor }]);
+    };
+  }, [expressions]);
+
   useEffect(() => {
     const allVars = new Set();
     expressions.forEach(exp => {
@@ -183,8 +193,8 @@ export default function App() {
           margin: { t: 20 },
         }}
         config={{
-          displaylogo: false, // ✅ hides the Plotly logo
-          modeBarButtonsToRemove: ['sendDataToCloud'], // optional: cleaner toolbar
+          displaylogo: false,
+          modeBarButtonsToRemove: ['sendDataToCloud'],
         }}
         style={{ width: "100%", height: "500px" }}
       />
