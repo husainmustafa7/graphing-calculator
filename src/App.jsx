@@ -46,7 +46,7 @@ export default function App() {
   const generatePlotData = () => {
     const plots = [];
   
-    // Better resolution (more grid points)
+    // High-res grid for implicit plotting
     const xRange = Array.from({ length: 200 }, (_, i) => i / 10 - 10); // -10 to 10
     const yRange = Array.from({ length: 200 }, (_, j) => j / 10 - 10); // -10 to 10
   
@@ -57,7 +57,8 @@ export default function App() {
   
       try {
         if (isImplicit) {
-          // Convert "x^2 + y^2 = 25" → "x^2 + y^2 - 25"
+          console.log("✅ Plotting implicit:", exp.expr);
+  
           const expr0 = normalizeExpression(raw.replace("=", "-"));
           const points = { x: [], y: [] };
   
@@ -65,7 +66,6 @@ export default function App() {
             yRange.forEach(yVal => {
               const scope = { x: xVal, y: yVal, ...variables };
               const result = evaluate(expr0, scope);
-  
               if (Math.abs(result) < 0.8) {
                 points.x.push(xVal);
                 points.y.push(yVal);
@@ -76,17 +76,17 @@ export default function App() {
           plots.push({
             x: points.x,
             y: points.y,
-            mode: "markers",
             type: "scatter",
+            mode: "markers",
             marker: { color, size: 3 },
             name: exp.expr,
             hoverinfo: "skip",
           });
   
-          return;
+          return; // ❗ Prevent standard plotting below
         }
   
-        // Standard y = f(x)
+        // ✅ Standard function plot (y = f(x))
         const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
         const y = x.map(val =>
           evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
@@ -95,25 +95,29 @@ export default function App() {
         plots.push({
           x,
           y,
-          mode: "lines",
           type: "scatter",
+          mode: "lines",
           marker: { color },
           name: exp.expr,
         });
+  
       } catch (err) {
+        console.warn(`❌ Error parsing: ${exp.expr}`, err);
+  
         plots.push({
           x: [0], y: [0],
-          type: "scatter", mode: "text",
+          type: "scatter",
+          mode: "text",
           text: [`❌ ${exp.expr}`],
           textposition: "top center",
           marker: { color: "red" },
-          showlegend: false
+          showlegend: false,
         });
       }
     });
   
     return plots;
-  };      
+  };       
 
   const isValidExpression = (expr) => {
     try {
