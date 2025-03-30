@@ -46,8 +46,9 @@ export default function App() {
   const generatePlotData = () => {
     const plots = [];
   
-    const xRange = Array.from({ length: 200 }, (_, i) => i / 10 - 10); // finer grid
-    const yRange = Array.from({ length: 200 }, (_, j) => j / 10 - 10);
+    // Better resolution (more grid points)
+    const xRange = Array.from({ length: 200 }, (_, i) => i / 10 - 10); // -10 to 10
+    const yRange = Array.from({ length: 200 }, (_, j) => j / 10 - 10); // -10 to 10
   
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
@@ -58,25 +59,26 @@ export default function App() {
         if (isImplicit) {
           // Convert "x^2 + y^2 = 25" → "x^2 + y^2 - 25"
           const expr0 = normalizeExpression(raw.replace("=", "-"));
-          const zData = [];
+          const points = { x: [], y: [] };
   
-          for (let i = 0; i < yRange.length; i++) {
-            const row = [];
-            for (let j = 0; j < xRange.length; j++) {
-              const scope = { x: xRange[j], y: yRange[i], ...variables };
+          xRange.forEach(xVal => {
+            yRange.forEach(yVal => {
+              const scope = { x: xVal, y: yVal, ...variables };
               const result = evaluate(expr0, scope);
-              row.push(Math.abs(result) < 1 ? 1 : NaN); // tolerance for match
-            }
-            zData.push(row);
-          }
+  
+              if (Math.abs(result) < 0.8) {
+                points.x.push(xVal);
+                points.y.push(yVal);
+              }
+            });
+          });
   
           plots.push({
-            x: xRange,
-            y: yRange,
-            z: zData,
-            type: "heatmap",
-            colorscale: [[0, 'rgba(0,0,0,0)'], [1, color]],
-            showscale: false,
+            x: points.x,
+            y: points.y,
+            mode: "markers",
+            type: "scatter",
+            marker: { color, size: 3 },
             name: exp.expr,
             hoverinfo: "skip",
           });
@@ -84,7 +86,7 @@ export default function App() {
           return;
         }
   
-        // Handle standard y= or inequality plots
+        // Standard y = f(x)
         const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
         const y = x.map(val =>
           evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
@@ -111,7 +113,7 @@ export default function App() {
     });
   
     return plots;
-  };    
+  };      
 
   const isValidExpression = (expr) => {
     try {
@@ -183,17 +185,19 @@ export default function App() {
         data={generatePlotData()}
         layout={{
           autosize: true,
-          paper_bgcolor: "#121212",
+          xaxis: { range: [-6, 6] },
+          yaxis: { range: [-6, 6] },
           plot_bgcolor: "#121212",
+          paper_bgcolor: "#121212",
           font: { color: "white" },
-          margin: { t: 20 },
+          margin: { t: 20 }
         }}
         config={{
           displaylogo: false,
           modeBarButtonsToRemove: ['sendDataToCloud'],
         }}
-        style={{ width: "100%", height: "100%" }}
-        />
+        style={{ width: "100%", height: "500px" }}
+      />
       </div>
     </div>
   );
