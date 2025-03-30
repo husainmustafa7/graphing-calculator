@@ -46,47 +46,45 @@ export default function App() {
   const generatePlotData = () => {
     const plots = [];
   
-    const xRange = Array.from({ length: 100 }, (_, i) => i / 5 - 10); // x: -10 to 10
-    const yRange = Array.from({ length: 100 }, (_, j) => j / 5 - 10); // y: -10 to 10
+    const xRange = Array.from({ length: 100 }, (_, i) => i / 5 - 10); // -10 to 10
+    const yRange = Array.from({ length: 100 }, (_, j) => j / 5 - 10); // -10 to 10
   
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
       const color = exp.color || colors[index % colors.length];
-  
-      // Detect implicit equation like: x^2 + y^2 = 25
       const isImplicit = raw.includes("=") && raw.includes("x") && raw.includes("y");
   
       try {
         if (isImplicit) {
-          const implicitExpr = normalizeExpression(raw.replace("=", "-")); // make it zero-based
-          const points = { x: [], y: [] };
+          // Convert "x^2 + y^2 = 25" → "x^2 + y^2 - 25"
+          const expr0 = normalizeExpression(raw.replace("=", "-"));
+          const zData = [];
   
-          xRange.forEach(xVal => {
-            yRange.forEach(yVal => {
-              const scope = { x: xVal, y: yVal, ...variables };
-              const result = evaluate(implicitExpr, scope);
-  
-              // Plot if close to zero (within tolerance)
-              if (Math.abs(result) < 0.5) {
-                points.x.push(xVal);
-                points.y.push(yVal);
-              }
-            });
-          });
+          for (let i = 0; i < yRange.length; i++) {
+            const row = [];
+            for (let j = 0; j < xRange.length; j++) {
+              const scope = { x: xRange[j], y: yRange[i], ...variables };
+              const result = evaluate(expr0, scope);
+              row.push(Math.abs(result) < 0.5 ? 1 : NaN); // tolerance for match
+            }
+            zData.push(row);
+          }
   
           plots.push({
-            x: points.x,
-            y: points.y,
-            mode: "markers",
-            type: "scatter",
-            marker: { color, size: 3 },
-            name: exp.expr
+            x: xRange,
+            y: yRange,
+            z: zData,
+            type: "heatmap",
+            colorscale: [[0, 'rgba(0,0,0,0)'], [1, color]],
+            showscale: false,
+            name: exp.expr,
+            hoverinfo: "skip",
           });
   
           return;
         }
   
-        // Standard function like y = f(x)
+        // Handle standard y= or inequality plots
         const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
         const y = x.map(val =>
           evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
@@ -98,13 +96,12 @@ export default function App() {
           mode: "lines",
           type: "scatter",
           marker: { color },
-          name: exp.expr
+          name: exp.expr,
         });
       } catch (err) {
         plots.push({
           x: [0], y: [0],
-          mode: "text",
-          type: "scatter",
+          type: "scatter", mode: "text",
           text: [`❌ ${exp.expr}`],
           textposition: "top center",
           marker: { color: "red" },
@@ -114,7 +111,7 @@ export default function App() {
     });
   
     return plots;
-  };  
+  };    
 
   const isValidExpression = (expr) => {
     try {
