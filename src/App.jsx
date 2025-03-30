@@ -14,10 +14,10 @@ export default function App() {
 
   const extractVariables = (expr) => {
     const normalized = normalizeExpression(expr);
-    const matches = normalized.match(/\b[a-zA-Z]\b/g); // only single-letter variables
+    const matches = normalized.match(/[a-zA-Z]/g); // match all letters
     const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
-    return letters.filter((v) => !["x", "e", "p"].includes(v));
-  };
+    return letters.filter((v) => !["x", "y", "e", "p"].includes(v)); // exclude y ✅
+  };  
 
   // ✅ Hook for Android WebView input
   useEffect(() => {
