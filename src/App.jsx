@@ -44,72 +44,77 @@ export default function App() {
   }, [expressions]);
 
   const generatePlotData = () => {
-    const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
     const plots = [];
-
+  
+    const xRange = Array.from({ length: 100 }, (_, i) => i / 5 - 10); // x: -10 to 10
+    const yRange = Array.from({ length: 100 }, (_, j) => j / 5 - 10); // y: -10 to 10
+  
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
       const color = exp.color || colors[index % colors.length];
-
+  
+      // Detect implicit equation like: x^2 + y^2 = 25
+      const isImplicit = raw.includes("=") && raw.includes("x") && raw.includes("y");
+  
       try {
-        // Compound y inequalities
-        const compound = raw.match(/^\s*y\s*([<>]=?)\s*([^&]+)&&\s*y\s*([<>]=?)\s*(.+)$/i);
-        if (compound) {
-          const [, , expr1, , expr2] = compound;
-          const y1 = x.map(val => evaluate(normalizeExpression(expr1), { x: val, ...variables }));
-          const y2 = x.map(val => evaluate(normalizeExpression(expr2), { x: val, ...variables }));
-          plots.push({ x, y: y1, type: "scatter", mode: "lines", line: { color } });
-          plots.push({ x, y: y2, type: "scatter", mode: "lines", line: { color }, fill: "tonexty", fillcolor: color + "33" });
-          return;
-        }
-
-        // Simple y inequality
-        const yIneq = raw.match(/^\s*y\s*([<>]=?)\s*(.+)$/i);
-        if (yIneq) {
-          const [, , rhs] = yIneq;
-          const yVals = x.map(val => evaluate(normalizeExpression(rhs), { x: val, ...variables }));
-          plots.push({ x, y: yVals, type: "scatter", mode: "lines", line: { color }, fill: "tonexty", fillcolor: color + "33" });
-          return;
-        }
-
-        // X inequality
-        const xIneq = raw.match(/^\s*x\s*([<>]=?)\s*([\d.\-+*/ePIx()]+)$/i);
-        if (xIneq) {
-          const [, op, rhs] = xIneq;
-          const xVal = evaluate(normalizeExpression(rhs), variables);
-          const y = x.map(val => {
-            switch (op) {
-              case ">": return val > xVal ? 10 : NaN;
-              case "<": return val < xVal ? 10 : NaN;
-              case ">=": return val >= xVal ? 10 : NaN;
-              case "<=": return val <= xVal ? 10 : NaN;
-              default: return NaN;
-            }
+        if (isImplicit) {
+          const implicitExpr = normalizeExpression(raw.replace("=", "-")); // make it zero-based
+          const points = { x: [], y: [] };
+  
+          xRange.forEach(xVal => {
+            yRange.forEach(yVal => {
+              const scope = { x: xVal, y: yVal, ...variables };
+              const result = evaluate(implicitExpr, scope);
+  
+              // Plot if close to zero (within tolerance)
+              if (Math.abs(result) < 0.5) {
+                points.x.push(xVal);
+                points.y.push(yVal);
+              }
+            });
           });
-          plots.push({ x, y, type: "scatter", mode: "none", fill: "tozeroy", fillcolor: color + "33", name: exp.expr });
+  
+          plots.push({
+            x: points.x,
+            y: points.y,
+            mode: "markers",
+            type: "scatter",
+            marker: { color, size: 3 },
+            name: exp.expr
+          });
+  
           return;
         }
-
-        // Standard function
+  
+        // Standard function like y = f(x)
+        const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
         const y = x.map(val =>
           evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
         );
-
-        plots.push({ x, y, type: "scatter", mode: "lines", marker: { color }, name: exp.expr });
+  
+        plots.push({
+          x,
+          y,
+          mode: "lines",
+          type: "scatter",
+          marker: { color },
+          name: exp.expr
+        });
       } catch (err) {
         plots.push({
           x: [0], y: [0],
-          type: "scatter", mode: "text",
-          text: [`❌ Error in: ${exp.expr}`],
+          mode: "text",
+          type: "scatter",
+          text: [`❌ ${exp.expr}`],
           textposition: "top center",
           marker: { color: "red" },
           showlegend: false
         });
       }
     });
-
+  
     return plots;
-  };
+  };  
 
   const isValidExpression = (expr) => {
     try {
