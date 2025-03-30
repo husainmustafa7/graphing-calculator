@@ -46,8 +46,8 @@ export default function App() {
   const generatePlotData = () => {
     const plots = [];
   
-    const xRange = Array.from({ length: 100 }, (_, i) => i / 5 - 10); // -10 to 10
-    const yRange = Array.from({ length: 100 }, (_, j) => j / 5 - 10); // -10 to 10
+    const xRange = Array.from({ length: 200 }, (_, i) => i / 10 - 10); // finer grid
+    const yRange = Array.from({ length: 200 }, (_, j) => j / 10 - 10);
   
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
@@ -65,7 +65,7 @@ export default function App() {
             for (let j = 0; j < xRange.length; j++) {
               const scope = { x: xRange[j], y: yRange[i], ...variables };
               const result = evaluate(expr0, scope);
-              row.push(Math.abs(result) < 0.5 ? 1 : NaN); // tolerance for match
+              row.push(Math.abs(result) < 1 ? 1 : NaN); // tolerance for match
             }
             zData.push(row);
           }
