@@ -9,23 +9,30 @@ export default function App() {
     { id: 1, expr: "sinx", color: "blue" }
   ]);
 
+  const [plotRange, setPlotRange] = useState({
+    xMin: -10, xMax: 10,
+    yMin: -10, yMax: 10
+  });
+
   const colors = ["blue", "red", "green", "orange", "purple", "cyan", "magenta"];
 
-  // ✅ Android WebView support
   useEffect(() => {
     window.plotFromNative = function (expr) {
-      console.log("📡 Received from Android:", expr);
       const nextId = expressions.length ? expressions[expressions.length - 1].id + 1 : 1;
       const nextColor = colors[expressions.length % colors.length];
-      setExpressions(prev => [...prev, { id: nextId, expr: expr, color: nextColor }]);
+      setExpressions(prev => [...prev, { id: nextId, expr, color: nextColor }]);
     };
   }, [expressions]);
 
   const generatePlotData = () => {
     const plots = [];
 
-    const xRange = Array.from({ length: 200 }, (_, i) => i / 10 - 10);
-    const yRange = Array.from({ length: 200 }, (_, j) => j / 10 - 10);
+    const stepX = (plotRange.xMax - plotRange.xMin) / 1000;
+    const x = Array.from({ length: 1000 }, (_, i) => plotRange.xMin + i * stepX);
+
+    const stepXY = (plotRange.xMax - plotRange.xMin) / 100;
+    const xRange = Array.from({ length: 100 }, (_, i) => plotRange.xMin + i * stepXY);
+    const yRange = Array.from({ length: 100 }, (_, j) => plotRange.yMin + j * stepXY);
 
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
@@ -34,8 +41,6 @@ export default function App() {
 
       try {
         if (isImplicit) {
-          console.log("✅ Plotting implicit:", exp.expr);
-
           const expr0 = normalizeExpression(raw.replace("=", "-"));
           const points = { x: [], y: [] };
 
@@ -63,8 +68,6 @@ export default function App() {
           return;
         }
 
-        // Standard function: y = f(x)
-        const x = Array.from({ length: 1000 }, (_, i) => i / 50 - 10);
         const y = x.map(val =>
           evaluate(normalizeExpression(exp.expr), { x: val })
         );
@@ -79,8 +82,6 @@ export default function App() {
         });
 
       } catch (err) {
-        console.warn(`❌ Error parsing: ${exp.expr}`, err);
-
         plots.push({
           x: [0], y: [0],
           type: "scatter",
@@ -94,15 +95,6 @@ export default function App() {
     });
 
     return plots;
-  };
-
-  const isValidExpression = (expr) => {
-    try {
-      evaluate(normalizeExpression(expr), { x: 0 });
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   const handleExpressionChange = (id, value) => {
@@ -147,15 +139,8 @@ export default function App() {
           layout={{
             autosize: true,
             dragmode: "pan",
-            xaxis: {
-              autorange: true,
-              title: "x"
-            },
-            yaxis: {
-              autorange: true,
-              scaleanchor: "x",
-              title: "y"
-            },
+            xaxis: { autorange: true, title: "x" },
+            yaxis: { autorange: true, title: "y", scaleanchor: "x" },
             plot_bgcolor: "#121212",
             paper_bgcolor: "#121212",
             font: { color: "white" },
@@ -165,7 +150,17 @@ export default function App() {
             displaylogo: false,
             modeBarButtonsToRemove: ['sendDataToCloud'],
             responsive: true,
-            scrollZoom: true,
+            scrollZoom: true
+          }}
+          onRelayout={(e) => {
+            if (e["xaxis.range[0]"] && e["xaxis.range[1]"] && e["yaxis.range[0]"] && e["yaxis.range[1]"]) {
+              setPlotRange({
+                xMin: e["xaxis.range[0]"],
+                xMax: e["xaxis.range[1]"],
+                yMin: e["yaxis.range[0]"],
+                yMax: e["yaxis.range[1]"]
+              });
+            }
           }}
           style={{ width: "100%", height: "500px" }}
         />
