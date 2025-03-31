@@ -26,24 +26,25 @@ export default function App() {
 
   const generatePlotData = () => {
     const plots = [];
-
-    const stepX = (plotRange.xMax - plotRange.xMin) / 1000;
-    const x = Array.from({ length: 1000 }, (_, i) => plotRange.xMin + i * stepX);
-
+  
+    const resolution = 2000;
+    const stepX = (plotRange.xMax - plotRange.xMin) / resolution;
+    const x = Array.from({ length: resolution }, (_, i) => plotRange.xMin + i * stepX);
+  
     const stepXY = (plotRange.xMax - plotRange.xMin) / 100;
     const xRange = Array.from({ length: 100 }, (_, i) => plotRange.xMin + i * stepXY);
     const yRange = Array.from({ length: 100 }, (_, j) => plotRange.yMin + j * stepXY);
-
+  
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
       const color = exp.color || colors[index % colors.length];
       const isImplicit = raw.includes("=") && raw.includes("x") && raw.includes("y");
-
+  
       try {
         if (isImplicit) {
           const expr0 = normalizeExpression(raw.replace("=", "-"));
           const points = { x: [], y: [] };
-
+  
           xRange.forEach(xVal => {
             yRange.forEach(yVal => {
               const scope = { x: xVal, y: yVal };
@@ -54,7 +55,7 @@ export default function App() {
               }
             });
           });
-
+  
           plots.push({
             x: points.x,
             y: points.y,
@@ -64,24 +65,31 @@ export default function App() {
             name: exp.expr,
             hoverinfo: "skip",
           });
-
+  
           return;
         }
-
+  
+        // ✅ Standard y = f(x) plot
         const y = x.map(val =>
           evaluate(normalizeExpression(exp.expr), { x: val })
         );
-
+  
         plots.push({
           x,
           y,
           type: "scatter",
           mode: "lines",
-          marker: { color },
+          line: {
+            color,
+            width: 2,
+            dash: "solid"
+          },
           name: exp.expr,
         });
-
+  
       } catch (err) {
+        console.warn(`❌ Error parsing: ${exp.expr}`, err);
+  
         plots.push({
           x: [0], y: [0],
           type: "scatter",
@@ -93,9 +101,9 @@ export default function App() {
         });
       }
     });
-
+  
     return plots;
-  };
+  };  
 
   const handleExpressionChange = (id, value) => {
     setExpressions(expressions.map(exp =>
