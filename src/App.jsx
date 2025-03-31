@@ -146,8 +146,16 @@ export default function App() {
           data={generatePlotData()}
           layout={{
             autosize: true,
-            xaxis: { range: [-6, 6] },
-            yaxis: { range: [-6, 6] },
+            dragmode: "pan",
+            xaxis: {
+              autorange: true,
+              title: "x"
+            },
+            yaxis: {
+              autorange: true,
+              scaleanchor: "x",
+              title: "y"
+            },
             plot_bgcolor: "#121212",
             paper_bgcolor: "#121212",
             font: { color: "white" },
@@ -156,6 +164,8 @@ export default function App() {
           config={{
             displaylogo: false,
             modeBarButtonsToRemove: ['sendDataToCloud'],
+            responsive: true,
+            scrollZoom: true,
           }}
           style={{ width: "100%", height: "500px" }}
         />
