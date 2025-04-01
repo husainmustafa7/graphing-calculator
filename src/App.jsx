@@ -8,13 +8,19 @@ export default function App() {
   const [expressions, setExpressions] = useState([
     { id: 1, expr: "sinx", color: "blue" }
   ]);
-
+  const [variables, setVariables] = useState({});
   const [plotRange, setPlotRange] = useState({
-    xMin: -50, xMax: 50,
-    yMin: -50, yMax: 50
+    xMin: -10, xMax: 10, yMin: -10, yMax: 10
   });
 
   const colors = ["blue", "red", "green", "orange", "purple", "cyan", "magenta"];
+
+  const extractVariables = (expr) => {
+    const normalized = normalizeExpression(expr);
+    const matches = normalized.match(/\b[a-zA-Z]\b/g);
+    const letters = [...new Set(matches?.map((l) => l.toLowerCase()) || [])];
+    return letters.filter((v) => !["x", "e", "p"].includes(v));
+  };
 
   useEffect(() => {
     window.plotFromNative = function (expr) {
@@ -24,15 +30,24 @@ export default function App() {
     };
   }, [expressions]);
 
+  useEffect(() => {
+    const allVars = new Set();
+    expressions.forEach(exp => {
+      extractVariables(exp.expr).forEach(v => allVars.add(v));
+    });
+
+    const updated = {};
+    allVars.forEach(v => {
+      updated[v] = variables[v] ?? 1;
+    });
+
+    setVariables(updated);
+  }, [expressions]);
+
   const generatePlotData = () => {
     const plots = [];
-    const resolution = 2000;
-    const stepX = (plotRange.xMax - plotRange.xMin) / resolution;
-    const x = Array.from({ length: resolution }, (_, i) => plotRange.xMin + i * stepX);
-
-    const stepXY = (plotRange.xMax - plotRange.xMin) / 100;
-    const xRange = Array.from({ length: 100 }, (_, i) => plotRange.xMin + i * stepXY);
-    const yRange = Array.from({ length: 100 }, (_, j) => plotRange.yMin + j * stepXY);
+    const { xMin, xMax } = plotRange;
+    const x = Array.from({ length: 1500 }, (_, i) => xMin + (i * (xMax - xMin)) / 1499);
 
     expressions.forEach((exp, index) => {
       const raw = normalizeExpression(exp.expr);
@@ -44,9 +59,12 @@ export default function App() {
           const expr0 = normalizeExpression(raw.replace("=", "-"));
           const points = { x: [], y: [] };
 
-          xRange.forEach(xVal => {
-            yRange.forEach(yVal => {
-              const scope = { x: xVal, y: yVal };
+          const yVals = Array.from({ length: 300 }, (_, j) =>
+            plotRange.yMin + (j * (plotRange.yMax - plotRange.yMin)) / 299);
+
+          x.forEach(xVal => {
+            yVals.forEach(yVal => {
+              const scope = { x: xVal, y: yVal, ...variables };
               const result = evaluate(expr0, scope);
               if (Math.abs(result) < 0.8) {
                 points.x.push(xVal);
@@ -62,14 +80,13 @@ export default function App() {
             mode: "markers",
             marker: { color, size: 3 },
             name: exp.expr,
-            hoverinfo: "skip",
+            hoverinfo: "skip"
           });
-
           return;
         }
 
         const y = x.map(val =>
-          evaluate(normalizeExpression(exp.expr), { x: val })
+          evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
         );
 
         plots.push({
@@ -77,28 +94,34 @@ export default function App() {
           y,
           type: "scatter",
           mode: "lines",
-          line: {
-            color,
-            width: 2,
-            dash: "solid"
-          },
-          name: exp.expr,
+          line: { color, width: 2 },
+          name: exp.expr
         });
 
       } catch (err) {
         plots.push({
-          x: [0], y: [0],
+          x: [0],
+          y: [0],
           type: "scatter",
           mode: "text",
           text: [`❌ ${exp.expr}`],
           textposition: "top center",
           marker: { color: "red" },
-          showlegend: false,
+          showlegend: false
         });
       }
     });
 
     return plots;
+  };
+
+  const isValidExpression = (expr) => {
+    try {
+      evaluate(normalizeExpression(expr), { x: 0, ...variables });
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const handleExpressionChange = (id, value) => {
@@ -123,63 +146,65 @@ export default function App() {
 
   return (
     <div className="container">
-      <h2 className="title">Graphing Calculator</h2>
+      <div className="sidebar">
+        <h2>Graphing Calculator</h2>
 
-      {expressions.map(exp => (
-        <div key={exp.id} className="expression-row">
-          <input
-            type="text"
-            value={exp.expr}
-            onChange={(e) => handleExpressionChange(exp.id, e.target.value)}
-            placeholder="e.g. y = sinx or x^2 + y^2 = 25"
-          />
-          <button className="remove-btn" onClick={() => removeExpression(exp.id)}>✖</button>
-        </div>
-      ))}
+        {expressions.map(exp => (
+          <div key={exp.id} className="expression-row">
+            <input
+              type="text"
+              value={exp.expr}
+              onChange={(e) => handleExpressionChange(exp.id, e.target.value)}
+              placeholder="e.g. y = sinx"
+            />
+            <button className="remove-btn" onClick={() => removeExpression(exp.id)}>✖</button>
+          </div>
+        ))}
 
-      <button className="add-btn" onClick={addExpression}>+ Add Expression</button>
+        <button className="add-btn" onClick={addExpression}>+ Add Expression</button>
+        <button className="reset-btn" onClick={resetZoom}>🔄 Reset Zoom</button>
+      </div>
 
-      <button className="reset-btn" onClick={resetZoom}>🔄 Reset Zoom</button>
-
-      <Plot
-        data={generatePlotData()}
-        layout={{
-          dragmode: "pan",
-          xaxis: {
-            title: "x",
-            range: [plotRange.xMin, plotRange.xMax]
-          },
-          yaxis: {
-            title: "y",
-            range: [plotRange.yMin, plotRange.yMax],
-            scaleanchor: "x"
-          },
-          plot_bgcolor: "#121212",
-          paper_bgcolor: "#121212",
-          font: { color: "white" },
-          margin: { t: 20 }
-        }}
-        config={{
-          displaylogo: false,
-          scrollZoom: true,
-          responsive: true,
-          modeBarButtonsToRemove: ['sendDataToCloud', 'autoScale2d', 'resetScale2d']
-        }}
-        onRelayout={(e) => {
-          if (e["xaxis.range[0]"] && e["xaxis.range[1]"] && e["yaxis.range[0]"] && e["yaxis.range[1]"]) {
-            setPlotRange({
-              xMin: e["xaxis.range[0]"],
-              xMax: e["xaxis.range[1]"],
-              yMin: e["yaxis.range[0]"],
-              yMax: e["yaxis.range[1]"]
-            });
-          }
-        }}
-        style={{
-          width: "100%",
-          height: window.innerWidth < 600 ? "400px" : "500px"
-        }}
-      />
+      <div className="plot-area">
+        <Plot
+          data={generatePlotData()}
+          layout={{
+            autosize: true,
+            dragmode: "pan",
+            xaxis: {
+              range: [plotRange.xMin, plotRange.xMax],
+              fixedrange: false
+            },
+            yaxis: {
+              range: [plotRange.yMin, plotRange.yMax],
+              fixedrange: false,
+              scaleanchor: "x"
+            },
+            paper_bgcolor: "#121212",
+            plot_bgcolor: "#121212",
+            font: { color: "white" },
+            margin: { t: 20 }
+          }}
+          config={{
+            displaylogo: false,
+            modeBarButtonsToRemove: ['sendDataToCloud', 'autoscale', 'resetScale2d']
+          }}
+          onRelayout={(e) => {
+            if (
+              e["xaxis.range[0]"] && e["xaxis.range[1]"] &&
+              e["yaxis.range[0]"] && e["yaxis.range[1]"]
+            ) {
+              setPlotRange({
+                xMin: e["xaxis.range[0]"],
+                xMax: e["xaxis.range[1]"],
+                yMin: e["yaxis.range[0]"],
+                yMax: e["yaxis.range[1]"]
+              });
+            }
+          }}
+          style={{ width: "100%", height: "100vh" }}
+        />
+      </div>
     </div>
   );
 }
