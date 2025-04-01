@@ -47,32 +47,34 @@ export default function App() {
 
   const generatePlotData = () => {
     const plots = [];
-    const { xMin, xMax } = plotRange;
-    const x = Array.from({ length: 1500 }, (_, i) => xMin + (i * (xMax - xMin)) / 1499);
+    const { xMin, xMax, yMin, yMax } = plotRange;
+    const xGrid = Array.from({ length: 300 }, (_, i) => xMin + (i * (xMax - xMin)) / 299);
+    const yGrid = Array.from({ length: 300 }, (_, j) => yMin + (j * (yMax - yMin)) / 299);
 
     expressions.forEach((exp, index) => {
-      const raw = normalizeExpression(exp.expr);
+      const rawInput = exp.expr;
+      const raw = normalizeExpression(rawInput);
       const color = exp.color || colors[index % colors.length];
       const isImplicit = raw.includes("=") && raw.includes("x") && raw.includes("y");
 
       try {
-        // 🛡️ Prevent crashing on incomplete expressions
-        if (/[+\-*/=]$/.test(raw) || raw.trim().length < 3) {
-          throw new Error("Incomplete expression");
+        if (
+          /[+\-*/=]$/.test(raw) ||
+          (isImplicit && (!raw.includes("x") || !raw.includes("y"))) ||
+          raw.length < 3
+        ) {
+          throw new Error("Incomplete or unsafe expression");
         }
 
         if (isImplicit) {
           const expr0 = normalizeExpression(raw.replace("=", "-"));
           const points = { x: [], y: [] };
 
-          const yVals = Array.from({ length: 300 }, (_, j) =>
-            plotRange.yMin + (j * (plotRange.yMax - plotRange.yMin)) / 299);
-
-          x.forEach(xVal => {
-            yVals.forEach(yVal => {
+          xGrid.forEach(xVal => {
+            yGrid.forEach(yVal => {
               const scope = { x: xVal, y: yVal, ...variables };
               const result = evaluate(expr0, scope);
-              if (Math.abs(result) < 0.8) {
+              if (Math.abs(result) < 0.1) {
                 points.x.push(xVal);
                 points.y.push(yVal);
               }
@@ -84,15 +86,16 @@ export default function App() {
             y: points.y,
             type: "scatter",
             mode: "markers",
-            marker: { color, size: 3 },
-            name: exp.expr,
+            marker: { color, size: 2 },
+            name: rawInput,
             hoverinfo: "skip"
           });
           return;
         }
 
+        const x = Array.from({ length: 1500 }, (_, i) => xMin + (i * (xMax - xMin)) / 1499);
         const y = x.map(val =>
-          evaluate(normalizeExpression(exp.expr), { x: val, ...variables })
+          evaluate(raw, { x: val, ...variables })
         );
 
         plots.push({
@@ -101,7 +104,7 @@ export default function App() {
           type: "scatter",
           mode: "lines",
           line: { color, width: 2 },
-          name: exp.expr
+          name: rawInput
         });
 
       } catch (err) {
