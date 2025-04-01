@@ -128,7 +128,7 @@ export default function App() {
             type="text"
             value={exp.expr}
             onChange={(e) => handleExpressionChange(exp.id, e.target.value)}
-            placeholder="e.g. y = sinx"
+            placeholder="e.g. y = sinx or x² + y² = 25"
           />
           <button className="remove-btn" onClick={() => removeExpression(exp.id)}>✖</button>
         </div>
@@ -139,10 +139,18 @@ export default function App() {
       <Plot
         data={generatePlotData()}
         layout={{
-          autosize: true,
           dragmode: "pan",
-          xaxis: { autorange: true, title: "x" },
-          yaxis: { autorange: true, title: "y", scaleanchor: "x" },
+          xaxis: {
+            title: "x",
+            range: [-10, 10],
+            fixedrange: false
+          },
+          yaxis: {
+            title: "y",
+            range: [-10, 10],
+            scaleanchor: "x",
+            fixedrange: false
+          },
           plot_bgcolor: "#121212",
           paper_bgcolor: "#121212",
           font: { color: "white" },
@@ -150,9 +158,9 @@ export default function App() {
         }}
         config={{
           displaylogo: false,
-          modeBarButtonsToRemove: ['sendDataToCloud'],
+          scrollZoom: true,
           responsive: true,
-          scrollZoom: true
+          modeBarButtonsToRemove: ['sendDataToCloud']
         }}
         onRelayout={(e) => {
           if (e["xaxis.range[0]"] && e["xaxis.range[1]"] && e["yaxis.range[0]"] && e["yaxis.range[1]"]) {
@@ -164,7 +172,10 @@ export default function App() {
             });
           }
         }}
-        style={{ width: "100%", height: "500px" }}
+        style={{
+          width: "100%",
+          height: window.innerWidth < 600 ? "400px" : "500px"
+        }}
       />
     </div>
   );

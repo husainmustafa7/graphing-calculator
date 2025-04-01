@@ -7,13 +7,14 @@ body {
 
 .container {
   width: 100%;
+  max-width: 100%;
   padding: 16px;
   box-sizing: border-box;
 }
 
 .title {
-  margin-bottom: 12px;
   font-size: 1.5rem;
+  margin-bottom: 12px;
 }
 
 .expression-row {
@@ -54,7 +55,11 @@ body {
   margin-bottom: 20px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
+  .container {
+    padding: 8px;
+  }
+
   .expression-row {
     flex-direction: column;
   }
