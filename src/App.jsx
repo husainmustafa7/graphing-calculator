@@ -26,7 +26,6 @@ export default function App() {
 
   const generatePlotData = () => {
     const plots = [];
-
     const resolution = 2000;
     const stepX = (plotRange.xMax - plotRange.xMin) / resolution;
     const x = Array.from({ length: resolution }, (_, i) => plotRange.xMin + i * stepX);
@@ -118,6 +117,10 @@ export default function App() {
     setExpressions(expressions.filter(exp => exp.id !== id));
   };
 
+  const resetZoom = () => {
+    setPlotRange({ xMin: -10, xMax: 10, yMin: -10, yMax: 10 });
+  };
+
   return (
     <div className="container">
       <h2 className="title">Graphing Calculator</h2>
@@ -128,7 +131,7 @@ export default function App() {
             type="text"
             value={exp.expr}
             onChange={(e) => handleExpressionChange(exp.id, e.target.value)}
-            placeholder="e.g. y = sinx or x² + y² = 25"
+            placeholder="e.g. y = sinx or x^2 + y^2 = 25"
           />
           <button className="remove-btn" onClick={() => removeExpression(exp.id)}>✖</button>
         </div>
@@ -136,20 +139,20 @@ export default function App() {
 
       <button className="add-btn" onClick={addExpression}>+ Add Expression</button>
 
+      <button className="reset-btn" onClick={resetZoom}>🔄 Reset Zoom</button>
+
       <Plot
         data={generatePlotData()}
         layout={{
           dragmode: "pan",
           xaxis: {
             title: "x",
-            range: [-10, 10],
-            fixedrange: false
+            range: [plotRange.xMin, plotRange.xMax]
           },
           yaxis: {
             title: "y",
-            range: [-10, 10],
-            scaleanchor: "x",
-            fixedrange: false
+            range: [plotRange.yMin, plotRange.yMax],
+            scaleanchor: "x"
           },
           plot_bgcolor: "#121212",
           paper_bgcolor: "#121212",
@@ -160,7 +163,7 @@ export default function App() {
           displaylogo: false,
           scrollZoom: true,
           responsive: true,
-          modeBarButtonsToRemove: ['sendDataToCloud']
+          modeBarButtonsToRemove: ['sendDataToCloud', 'autoScale2d', 'resetScale2d']
         }}
         onRelayout={(e) => {
           if (e["xaxis.range[0]"] && e["xaxis.range[1]"] && e["yaxis.range[0]"] && e["yaxis.range[1]"]) {

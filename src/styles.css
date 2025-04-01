@@ -68,3 +68,14 @@ body {
     align-self: flex-end;
   }
 }
+
+.reset-btn {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
