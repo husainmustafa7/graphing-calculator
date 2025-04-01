@@ -10,8 +10,8 @@ export default function App() {
   ]);
 
   const [plotRange, setPlotRange] = useState({
-    xMin: -10, xMax: 10,
-    yMin: -10, yMax: 10
+    xMin: -50, xMax: 50,
+    yMin: -50, yMax: 50
   });
 
   const colors = ["blue", "red", "green", "orange", "purple", "cyan", "magenta"];
