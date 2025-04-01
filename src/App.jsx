@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Plot from "react-plotly.js";
 import { evaluate } from "mathjs";
@@ -55,6 +56,11 @@ export default function App() {
       const isImplicit = raw.includes("=") && raw.includes("x") && raw.includes("y");
 
       try {
+        // 🛡️ Prevent crashing on incomplete expressions
+        if (/[+\-*/=]$/.test(raw) || raw.trim().length < 3) {
+          throw new Error("Incomplete expression");
+        }
+
         if (isImplicit) {
           const expr0 = normalizeExpression(raw.replace("=", "-"));
           const points = { x: [], y: [] };
@@ -113,15 +119,6 @@ export default function App() {
     });
 
     return plots;
-  };
-
-  const isValidExpression = (expr) => {
-    try {
-      evaluate(normalizeExpression(expr), { x: 0, ...variables });
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   const handleExpressionChange = (id, value) => {
